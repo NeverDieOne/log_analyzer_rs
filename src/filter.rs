@@ -48,19 +48,19 @@ impl TryFrom<Args> for Filters {
 }
 
 pub fn match_filters(log_entry: &LogEntry, filters: &Filters) -> bool {
-    if let Some(level) = filters.level.as_ref() {
+    if let Some(level) = &filters.level {
         if level != &log_entry.level {
             return false;
         }
     }
 
-    if let Some(service) = filters.service.as_ref() {
+    if let Some(service) = &filters.service {
         if service != &log_entry.service {
             return false;
         }
     };
 
-    if let Some(contains) = filters.contains.as_ref() {
+    if let Some(contains) = &filters.contains {
         if !log_entry.message.contains(contains) {
             return false;
         }
