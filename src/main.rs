@@ -1,6 +1,13 @@
+use chrono::DateTime;
+use clap::Parser;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use clap::Parser;
+
+mod filter;
+mod parser;
+
+use filter::{match_filters, Filters};
+use parser::parse_log_line;
 
 /// Log analyzer tool
 #[derive(Parser, Debug)]
@@ -8,7 +15,7 @@ struct Args {
     /// Path to the log file
     #[arg(short, long, default_value = "./src/app.log")]
     file: String,
-    
+
     /// Minimum log level to display (info, warning, error)
     #[arg(short, long)]
     level: Option<String>,
@@ -23,88 +30,47 @@ struct Args {
 
     /// Filter from timestamp (inclusive)
     #[arg(long)]
-    from: Option<String>,
+    from: Option<DateTime<chrono::Utc>>,
 
     /// Filter to timestamp (inclusive)
     #[arg(long)]
-    to: Option<String>,
-}
-
-#[derive(Debug)]
-struct LogEntry {
-    timestamp: String,
-    level: String,
-    service: String,
-    message: String,
-}
-
-fn parse_log_line(line: &str) -> Option<LogEntry> {
-    let parts = line.splitn(4, ' ').collect::<Vec<&str>>();
-    if parts.len() != 4 {
-        return None;
-    }
-
-    return LogEntry {
-        timestamp: parts[0].to_string(),
-        level: parts[1].to_string(),
-        service: parts[2].to_string(),
-        message: parts[3].to_string(),
-    }
-    .into();
+    to: Option<DateTime<chrono::Utc>>,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let file = File::open(args.file).expect("Unable to open log file");
+    let file = File::open(&args.file).expect("Unable to open log file");
     let reader = BufReader::new(file);
+
+    let filters = match Filters::try_from(args) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Error in configuration: {}", e);
+            return;
+        }
+    };
 
     for line in reader.lines() {
         let log_line = match line {
             Ok(content) => content,
             Err(e) => {
-                eprintln!("Error reading line: {}", e);
+                eprintln!("Error reading line: {}", e.to_string());
                 continue;
             }
         };
 
         let log_entry = match parse_log_line(&log_line) {
-            Some(entry) => entry,
-            None => {
-                eprintln!("Failed to parse log line: {}", log_line);
+            Ok(entry) => entry,
+            Err(e) => {
+                eprintln!("Failed to parse log line: {}; Error: {}", log_line, e);
                 continue;
             }
         };
 
-        if let Some(level) = args.level.as_deref() {
-            if level != log_entry.level {
-                continue;
-            }
-        };
-
-        if let Some(service) = args.service.as_deref() {
-            if service != log_entry.service {
-                continue;
-            }
-        };
-
-        if let Some(contains) = args.contains.as_deref() {
-            if !log_entry.message.contains(contains) {
-                continue;
-            }
-        };
-
-        if let Some(from) = args.from.as_deref() {
-            if log_entry.timestamp < from.to_string() {
-                continue;
-            }
-        };
-
-        if let Some(to) = args.to.as_deref() {
-            if log_entry.timestamp > to.to_string() {
-                continue;
-            }
-        };
+        if !match_filters(&log_entry, &filters) {
+            continue;
+        }
 
         println!("{:?}", log_entry);
     }
