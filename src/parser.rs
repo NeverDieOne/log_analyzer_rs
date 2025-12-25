@@ -11,9 +11,9 @@ pub enum ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ParseError::Level(level) => write!(f, "Invalid log level: '{}'", level),
-            ParseError::Timestamp(value) => write!(f, "Invalid date format: '{}'", value),
-            ParseError::Format(value) => write!(f, "Invalid log format: '{}'", value),
+            ParseError::Level(level) => write!(f, "Invalid log level: '{level}'"),
+            ParseError::Timestamp(value) => write!(f, "Invalid date format: '{value}'"),
+            ParseError::Format(value) => write!(f, "Invalid log format: '{value}'"),
         }
     }
 }

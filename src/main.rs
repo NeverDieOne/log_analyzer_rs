@@ -46,7 +46,7 @@ fn main() {
     let filters = match Filters::try_from(args) {
         Ok(f) => f,
         Err(e) => {
-            eprintln!("Error in configuration: {}", e);
+            eprintln!("Error in configuration: {e}");
             return;
         }
     };
@@ -55,7 +55,7 @@ fn main() {
         let log_line = match line {
             Ok(content) => content,
             Err(e) => {
-                eprintln!("Error reading line: {}", e);
+                eprintln!("Error reading line: {e}");
                 continue;
             }
         };
@@ -63,7 +63,7 @@ fn main() {
         let log_entry = match parse_log_line(&log_line) {
             Ok(entry) => entry,
             Err(e) => {
-                eprintln!("Failed to parse log line: {}; Error: {}", log_line, e);
+                eprintln!("Failed to parse log line: {log_line}; Error: {e}");
                 continue;
             }
         };
@@ -72,6 +72,6 @@ fn main() {
             continue;
         }
 
-        println!("{:?}", log_entry);
+        println!("{log_entry:?}");
     }
 }

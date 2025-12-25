@@ -11,7 +11,7 @@ pub enum ConfigError {
 impl fmt::Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigError::InvalidLevel(level) => write!(f, "Invalid log level: '{}'", level),
+            ConfigError::InvalidLevel(level) => write!(f, "Invalid log level: '{level}'"),
         }
     }
 }
@@ -54,18 +54,19 @@ pub fn match_filters(log_entry: &LogEntry, filters: &Filters) -> bool {
 
     if let Some(service) = &filters.service && service != &log_entry.service {
         return false;
-    };
+    }
 
     if let Some(contains) = &filters.contains && !log_entry.message.contains(contains) {
         return false;
-    };
+    }
 
     if let Some(from) = filters.from && log_entry.timestamp < from {
         return false;
-    };
+    }
 
     if let Some(to) = filters.to && log_entry.timestamp > to {
          return false;
-    };
+    }
+    
     true
 }
