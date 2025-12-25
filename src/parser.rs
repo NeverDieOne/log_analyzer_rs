@@ -48,7 +48,7 @@ pub fn parse_log_line(line: &str) -> Result<LogEntry, ParseError> {
 
     let timestamp = match DateTime::parse_from_rfc3339(parts[0]) {
         Ok(dt) => dt.with_timezone(&chrono::Utc),
-        Err(err) => return Err(ParseError::InvalidTimestamp(err.to_string())),
+        Err(_) => return Err(ParseError::InvalidTimestamp(parts[0].to_string())),
     };
 
     Ok(LogEntry {
