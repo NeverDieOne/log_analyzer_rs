@@ -12,20 +12,21 @@ struct Args {
     /// Minimum log level to display (info, warning, error)
     #[arg(short, long)]
     level: Option<String>,
-}
 
-#[derive(Debug)]
-enum LogLevel {
-    Info,
-    Warning,
-    Error,
+    /// Filter by service type (e.g., auth, payment)
+    #[arg(short, long)]
+    service: Option<String>,
+
+    /// Filter by message content
+    #[arg(short, long)]
+    contains: Option<String>,
 }
 
 #[derive(Debug)]
 struct LogEntry {
     timestamp: String,
-    log_type: LogLevel,
     level: String,
+    service: String,
     message: String,
 }
 
@@ -35,17 +36,10 @@ fn parse_log_line(line: &str) -> Option<LogEntry> {
         return None;
     }
 
-    let log_type = match parts[1] {
-        "INFO" => LogLevel::Info,
-        "WARN" => LogLevel::Warning,
-        "ERROR" => LogLevel::Error,
-        _ => return None,
-    };
-
     return LogEntry {
         timestamp: parts[0].to_string(),
-        log_type: log_type,
-        level: parts[2].to_string(),
+        level: parts[1].to_string(),
+        service: parts[2].to_string(),
         message: parts[3].to_string(),
     }
     .into();
@@ -70,6 +64,24 @@ fn main() {
             Some(entry) => entry,
             None => {
                 eprintln!("Failed to parse log line: {}", log_line);
+                continue;
+            }
+        };
+
+        if let Some(level) = args.level.as_deref() {
+            if level != log_entry.level {
+                continue;
+            }
+        };
+
+        if let Some(service) = args.service.as_deref() {
+            if service != log_entry.service {
+                continue;
+            }
+        };
+
+        if let Some(contains) = args.contains.as_deref() {
+            if !log_entry.message.contains(contains) {
                 continue;
             }
         };
