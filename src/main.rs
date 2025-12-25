@@ -20,6 +20,14 @@ struct Args {
     /// Filter by message content
     #[arg(short, long)]
     contains: Option<String>,
+
+    /// Filter from timestamp (inclusive)
+    #[arg(long)]
+    from: Option<String>,
+
+    /// Filter to timestamp (inclusive)
+    #[arg(long)]
+    to: Option<String>,
 }
 
 #[derive(Debug)]
@@ -82,6 +90,18 @@ fn main() {
 
         if let Some(contains) = args.contains.as_deref() {
             if !log_entry.message.contains(contains) {
+                continue;
+            }
+        };
+
+        if let Some(from) = args.from.as_deref() {
+            if log_entry.timestamp < from.to_string() {
+                continue;
+            }
+        };
+
+        if let Some(to) = args.to.as_deref() {
+            if log_entry.timestamp > to.to_string() {
                 continue;
             }
         };
