@@ -55,7 +55,7 @@ fn main() {
         let log_line = match line {
             Ok(content) => content,
             Err(e) => {
-                eprintln!("Error reading line: {}", e.to_string());
+                eprintln!("Error reading line: {}", e);
                 continue;
             }
         };
