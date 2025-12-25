@@ -1,5 +1,18 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use clap::Parser;
+
+/// Log analyzer tool
+#[derive(Parser, Debug)]
+struct Args {
+    /// Path to the log file
+    #[arg(short, long, default_value = "./src/app.log")]
+    file: String,
+    
+    /// Minimum log level to display (info, warning, error)
+    #[arg(short, long)]
+    level: Option<String>,
+}
 
 #[derive(Debug)]
 enum LogLevel {
@@ -39,7 +52,9 @@ fn parse_log_line(line: &str) -> Option<LogEntry> {
 }
 
 fn main() {
-    let file = File::open("./src/app.log").expect("Unable to open log file");
+    let args = Args::parse();
+
+    let file = File::open(args.file).expect("Unable to open log file");
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
