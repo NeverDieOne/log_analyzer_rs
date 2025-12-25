@@ -34,27 +34,29 @@ pub struct LogEntry {
 }
 
 pub fn parse_log_line(line: &str) -> Result<LogEntry, ParseError> {
-    let parts = line.splitn(4, ' ').collect::<Vec<&str>>();
-    if parts.len() != 4 {
-        return Err(ParseError::InvalidFormat(line.to_string()));
-    }
+    let mut parts = line.splitn(4, ' ');
 
-    let level = match parts[1] {
+    let ts_str = parts.next().ok_or(ParseError::InvalidFormat(line.to_string()))?;
+    let level_str = parts.next().ok_or(ParseError::InvalidFormat(line.to_string()))?;
+    let service = parts.next().ok_or(ParseError::InvalidFormat(line.to_string()))?;
+    let message = parts.next().ok_or(ParseError::InvalidFormat(line.to_string()))?;
+
+    let level = match level_str {
         "INFO" => LogLevel::Info,
         "WARN" => LogLevel::Warning,
         "ERROR" => LogLevel::Error,
         other => return Err(ParseError::InvalidLevel(other.to_string())),
     };
 
-    let timestamp = match DateTime::parse_from_rfc3339(parts[0]) {
+    let timestamp = match DateTime::parse_from_rfc3339(ts_str) {
         Ok(dt) => dt.with_timezone(&chrono::Utc),
-        Err(_) => return Err(ParseError::InvalidTimestamp(parts[0].to_string())),
+        Err(_) => return Err(ParseError::InvalidTimestamp(ts_str.to_string())),
     };
 
     Ok(LogEntry {
         timestamp: timestamp,
         level: level,
-        service: parts[2].to_string(),
-        message: parts[3].to_string(),
+        service: service.to_string(),
+        message: message.to_string(),
     })
 }
