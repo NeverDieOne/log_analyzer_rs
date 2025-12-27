@@ -50,7 +50,7 @@ fn main() {
     let reader = BufReader::new(file);
 
     let mut consumer: Box<dyn Consumer> = if args.json {
-        Box::new(JsonConsumer {})
+        Box::new(JsonConsumer::new())
     } else {
         Box::new(TextConsumer {})
     };
@@ -85,10 +85,12 @@ fn main() {
         }
 
         match consumer.consume(&log_entry) {
-            Ok(_) => {}
+            Ok(()) => {}
             Err(e) => {
                 eprintln!("Error consuming log entry: {e:?}");
             }
         }
     }
+
+    consumer.finalize().expect("Failed to finalize consumer");
 }
