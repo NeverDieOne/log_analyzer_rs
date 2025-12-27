@@ -5,9 +5,11 @@ use std::io::{BufRead, BufReader};
 
 mod filter;
 mod parser;
+mod consumer;
 
 use filter::{match_filters, Filters};
 use parser::parse_log_line;
+use consumer::{TextConsumer, JsonConsumer, Consumer};
 
 /// Log analyzer tool
 #[derive(Parser, Debug)]
@@ -35,6 +37,10 @@ struct Args {
     /// Filter to timestamp (inclusive)
     #[arg(long)]
     to: Option<DateTime<chrono::Utc>>,
+
+    /// Json output format
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    json: bool,
 }
 
 fn main() {
@@ -42,6 +48,12 @@ fn main() {
 
     let file = File::open(&args.file).expect("Unable to open log file");
     let reader = BufReader::new(file);
+
+    let mut consumer: Box<dyn Consumer> = if args.json {
+        Box::new(JsonConsumer {})
+    } else {
+        Box::new(TextConsumer {})
+    };
 
     let filters = match Filters::try_from(args) {
         Ok(f) => f,
@@ -72,6 +84,11 @@ fn main() {
             continue;
         }
 
-        println!("{log_entry:?}");
+        match consumer.consume(&log_entry) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error consuming log entry: {e:?}");
+            }
+        }
     }
 }

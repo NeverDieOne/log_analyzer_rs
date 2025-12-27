@@ -25,6 +25,16 @@ pub enum LogLevel {
     Error,
 }
 
+impl LogLevel {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LogLevel::Info => "INFO",
+            LogLevel::Warning => "WARN",
+            LogLevel::Error => "ERROR",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct LogEntry {
     pub timestamp: DateTime<chrono::Utc>,
