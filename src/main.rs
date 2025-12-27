@@ -6,10 +6,12 @@ use std::io::{BufRead, BufReader};
 mod consumer;
 mod filter;
 mod parser;
+mod aggregator;
 
 use consumer::{Consumer, JsonConsumer, TextConsumer};
 use filter::{Filters, match_filters};
 use parser::parse_log_line;
+use aggregator::CountAggregator;
 
 /// Log analyzer tool
 #[derive(Parser, Debug)]
@@ -41,6 +43,10 @@ struct Args {
     /// Json output format
     #[arg(long, action = clap::ArgAction::SetTrue)]
     json: bool,
+
+    /// Aggregate log entries by count
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    count: bool,
 }
 
 fn main() {
@@ -49,12 +55,17 @@ fn main() {
     let file = File::open(&args.file).expect("Unable to open log file");
     let reader = BufReader::new(file);
 
+    let mut consumers: Vec<Box<dyn Consumer>> = Vec::new();
     let stdout = Box::new(std::io::stdout());
-    let mut consumer: Box<dyn Consumer> = if args.json {
-        Box::new(JsonConsumer::new(stdout).expect("Can not create json consumer"))
+    let stderr = Box::new(std::io::stderr());
+    if args.json {
+        consumers.push(Box::new(JsonConsumer::new(stdout).expect("Can not create json consumer")));
     } else {
-        Box::new(TextConsumer::new(stdout))
-    };
+        consumers.push(Box::new(TextConsumer::new(stdout)));
+    }
+    if args.count {
+        consumers.push(Box::new(CountAggregator::new(stderr)));
+    }
 
     let filters = match Filters::try_from(args) {
         Ok(f) => f,
@@ -85,13 +96,22 @@ fn main() {
             continue;
         }
 
-        match consumer.consume(&log_entry) {
-            Ok(()) => {}
-            Err(e) => {
-                eprintln!("Error consuming log entry: {e:?}");
+        for consumer in consumers.iter_mut() {
+            match consumer.consume(&log_entry) {
+                Ok(()) => {}
+                Err(e) => {
+                    eprintln!("Error consuming log entry: {e:?}");
+                }
             }
         }
     }
 
-    consumer.finalize().expect("Failed to finalize consumer");
+    for consumer in consumers.iter_mut() {
+        match consumer.finalize() {
+            Ok(()) => {}
+            Err(e) => {
+                eprintln!("Error finalizing consumer: {e:?}");
+            }
+        }
+    }
 }
