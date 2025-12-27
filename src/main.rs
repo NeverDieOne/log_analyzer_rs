@@ -3,19 +3,19 @@ use clap::Parser;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+mod consumer;
 mod filter;
 mod parser;
-mod consumer;
 
-use filter::{match_filters, Filters};
+use consumer::{Consumer, JsonConsumer, TextConsumer};
+use filter::{Filters, match_filters};
 use parser::parse_log_line;
-use consumer::{TextConsumer, JsonConsumer, Consumer};
 
 /// Log analyzer tool
 #[derive(Parser, Debug)]
 struct Args {
     /// Path to the log file
-    #[arg(short, long, default_value = "./src/app.log")]
+    #[arg(short, long, default_value = "./app.log")]
     file: String,
 
     /// Minimum log level to display (info, warning, error)
@@ -49,10 +49,11 @@ fn main() {
     let file = File::open(&args.file).expect("Unable to open log file");
     let reader = BufReader::new(file);
 
+    let stdout = Box::new(std::io::stdout());
     let mut consumer: Box<dyn Consumer> = if args.json {
-        Box::new(JsonConsumer::new())
+        Box::new(JsonConsumer::new(stdout).expect("Can not create json consumer"))
     } else {
-        Box::new(TextConsumer {})
+        Box::new(TextConsumer::new(stdout))
     };
 
     let filters = match Filters::try_from(args) {
