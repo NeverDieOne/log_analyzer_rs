@@ -16,7 +16,7 @@ impl fmt::Display for ConfigError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Filters {
     level: Option<LogLevel>,
     service: Option<String>,
@@ -69,4 +69,33 @@ pub fn match_filters(log_entry: &LogEntry, filters: &Filters) -> bool {
     }
     
     true
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_filters_from_args_valid() {
+        let args = Args {
+            file: "".to_string(),
+            level: None,
+            service: None,
+            contains: None,
+            from: None,
+            to: None,
+            json: false,
+            count: false,
+        };
+        let filters = Filters::try_from(args).expect("Can not parse filters");
+        let expected_filters = Filters {
+            level: None,
+            service: None,
+            contains: None,
+            from: None,
+            to: None,
+        };
+        assert_eq!(filters, expected_filters);
+    }
 }
