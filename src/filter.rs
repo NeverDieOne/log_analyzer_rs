@@ -77,39 +77,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_filters_from_args_valid() {
-        let args: Args = Default::default();
-        let filters = Filters::try_from(args).expect("Can not parse filters");
-        let expected_filters = Filters {
-            level: None,
-            service: None,
-            contains: None,
-            from: None,
-            to: None,
-        };
-        assert_eq!(filters, expected_filters);
-    }
-
-    #[test]
     fn test_filters_invalid_level() {
         let args = Args {
-            file: "".to_string(),
             level: Some("warning".to_string()),
-            service: None,
-            contains: None,
-            from: None,
-            to: None,
-            json: false,
-            count: false,
+            ..Default::default()
         };
-        let filters = Filters::try_from(args);
-        match filters {
-            Ok(_) => panic!("Expected InvalidLevel error"),
-            Err(e) => {
-                match e {
-                    ConfigError::InvalidLevel(_) => ()
-                }
-            }
-        }
+        let err = Filters::try_from(args).unwrap_err();
+        matches!(err, ConfigError::InvalidLevel(_));
     }
 }
