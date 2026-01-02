@@ -35,7 +35,7 @@ impl LogLevel {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LogEntry {
     pub timestamp: DateTime<chrono::Utc>,
     pub level: LogLevel,
@@ -69,4 +69,53 @@ pub fn parse_log_line(line: &str) -> Result<LogEntry, ParseError> {
         service: service.to_string(),
         message: message.to_string(),
     })
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_log_line_valid() {
+        let line = "2024-01-01T12:00:00Z INFO auth User logged in";
+        let entry = parse_log_line(line).unwrap();
+        let expected_entry = LogEntry {
+            timestamp: "2024-01-01T12:00:00Z".parse().unwrap(),
+            level: LogLevel::Info,
+            service: "auth".to_string(),
+            message: "User logged in".to_string(),
+        };
+        assert_eq!(entry, expected_entry)
+    }
+
+    #[test]
+    fn test_parse_log_line_invalid() {
+        let line = "Invalid log line";
+        let err = parse_log_line(line).unwrap_err();
+        match err {
+            ParseError::Format(_) => (),
+            _ => panic!("Expected Format error"),
+        }
+    }
+
+    #[test]
+    fn test_parse_log_line_invalid_log_level() {
+        let line = "2024-01-01T12:00:00Z WARNING auth User logged in";
+        let err = parse_log_line(line).unwrap_err();
+        match err {
+            ParseError::Level(_) => (),
+            _ => panic!("Expected Level error"),
+        }
+    }
+
+    #[test]
+    fn test_parse_log_line_invalid_timestamp() {
+        let line = "2024-01-01 WARN auth User logged in";
+        let err = parse_log_line(line).unwrap_err();
+        match err {
+            ParseError::Timestamp(_) => (),
+            _ => panic!("Expected Timestamp error"),
+        }
+    }
 }
