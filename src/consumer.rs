@@ -59,7 +59,7 @@ impl Consumer for JsonConsumer {
         if !self.first {
             self.writer
                 .write_all(b",\n")
-                .map_err(|_| ConsumerError)?
+                .map_err(|_| ConsumerError)?;
         }
         self.first = false;
 

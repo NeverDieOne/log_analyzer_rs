@@ -96,7 +96,7 @@ fn main() {
             continue;
         }
 
-        for consumer in consumers.iter_mut() {
+        for consumer in &mut consumers {
             match consumer.consume(&log_entry) {
                 Ok(()) => {}
                 Err(e) => {
@@ -106,7 +106,7 @@ fn main() {
         }
     }
 
-    for consumer in consumers.iter_mut() {
+    for consumer in &mut consumers {
         match consumer.finalize() {
             Ok(()) => {}
             Err(e) => {
