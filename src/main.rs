@@ -14,7 +14,7 @@ use parser::parse_log_line;
 use aggregator::CountAggregator;
 
 /// Log analyzer tool
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Default)]
 struct Args {
     /// Path to the log file
     #[arg(short, long, default_value = "./app.log")]
