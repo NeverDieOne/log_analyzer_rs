@@ -4,14 +4,14 @@ use chrono::DateTime;
 use std::fmt;
 
 #[derive(Debug)]
-pub enum ConfigError {
+pub enum FilterError {
     InvalidLevel(String),
 }
 
-impl fmt::Display for ConfigError {
+impl fmt::Display for FilterError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigError::InvalidLevel(level) => write!(f, "Invalid log level: '{level}'"),
+            FilterError::InvalidLevel(level) => write!(f, "Invalid log level: '{level}'"),
         }
     }
 }
@@ -26,14 +26,14 @@ pub struct Filters {
 }
 
 impl TryFrom<Args> for Filters {
-    type Error = ConfigError;
+    type Error = FilterError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         let level = match args.level.as_deref() {
             Some("info") => Some(LogLevel::Info),
             Some("warn") => Some(LogLevel::Warning),
             Some("error") => Some(LogLevel::Error),
-            Some(other) => return Err(ConfigError::InvalidLevel(other.to_string())),
+            Some(other) => return Err(FilterError::InvalidLevel(other.to_string())),
             None => None,
         };
 
@@ -83,7 +83,7 @@ mod tests {
             ..Default::default()
         };
         let err = Filters::try_from(args).unwrap_err();
-        matches!(err, ConfigError::InvalidLevel(_));
+        matches!(err, FilterError::InvalidLevel(_));
     }
 
     #[test]
