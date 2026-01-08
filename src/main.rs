@@ -9,7 +9,7 @@ mod filter;
 mod output;
 mod parser;
 
-use aggregator::CountAggregator;
+use aggregator::{CountAggregator, LevelAggregator};
 use consumer::{Consumer, JsonConsumer, TextConsumer};
 use filter::{Filters, match_filters};
 use output::OutputWriter;
@@ -49,6 +49,10 @@ struct Args {
     /// Aggregate log entries by count
     #[arg(long, action = clap::ArgAction::SetTrue)]
     count: bool,
+
+    /// Aggregate log entries by level
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    level_aggregate: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -66,6 +70,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if args.count {
         consumers.push(Box::new(CountAggregator::new()));
+    }
+    if args.level_aggregate {
+        consumers.push(Box::new(LevelAggregator::new()));
     }
 
     let filters = match Filters::try_from(args) {
