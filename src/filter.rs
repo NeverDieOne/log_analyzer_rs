@@ -16,7 +16,7 @@ impl fmt::Display for ConfigError {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct Filters {
     level: Option<LogLevel>,
     service: Option<String>,
@@ -84,5 +84,102 @@ mod tests {
         };
         let err = Filters::try_from(args).unwrap_err();
         matches!(err, ConfigError::InvalidLevel(_));
+    }
+
+    #[test]
+    fn test_match_level() {
+        let filters = Filters {
+            level: Some(LogLevel::Error),
+            ..Default::default()
+        };
+
+        let log_entry = LogEntry {
+            level: LogLevel::Info,
+            service: "auth".to_string(),
+            message: "User logged in".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(!match_filters(&log_entry, &filters));
+
+        let log_entry_error = LogEntry {
+            level: LogLevel::Error,
+            service: "auth".to_string(),
+            message: "Failed login attempt".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(match_filters(&log_entry_error, &filters));
+    }
+
+    #[test]
+    fn test_match_service() {
+        let filters = Filters {
+            service: Some("payment".to_string()),
+            ..Default::default()
+        };
+        let log_entry = LogEntry {
+            level: LogLevel::Info,
+            service: "auth".to_string(),
+            message: "User logged in".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(!match_filters(&log_entry, &filters));
+
+        let log_entry_payment = LogEntry {
+            level: LogLevel::Info,
+            service: "payment".to_string(),
+            message: "Payment processed".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(match_filters(&log_entry_payment, &filters));
+    }
+
+    #[test]
+    fn test_match_contains() {
+        let filters = Filters {
+            contains: Some("error".to_string()),
+            ..Default::default()
+        };
+        let log_entry = LogEntry {
+            level: LogLevel::Info,
+            service: "auth".to_string(),
+            message: "User logged in".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(!match_filters(&log_entry, &filters));
+
+        let log_entry_error = LogEntry {
+            level: LogLevel::Error,
+            service: "auth".to_string(),
+            message: "An error occurred".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(match_filters(&log_entry_error, &filters));
+    }
+
+    #[test]
+    fn test_match_time_range() {
+        let from = chrono::Utc::now() - chrono::Duration::hours(1);
+        let to = chrono::Utc::now() + chrono::Duration::hours(1);
+        let filters = Filters {
+            from: Some(from),
+            to: Some(to),
+            ..Default::default()
+        };
+
+        let log_entry_outside = LogEntry {
+            level: LogLevel::Info,
+            service: "auth".to_string(),
+            message: "Old log entry".to_string(),
+            timestamp: chrono::Utc::now() - chrono::Duration::hours(2),
+        };
+        assert!(!match_filters(&log_entry_outside, &filters));
+
+        let log_entry_inside = LogEntry {
+            level: LogLevel::Info,
+            service: "auth".to_string(),
+            message: "Recent log entry".to_string(),
+            timestamp: chrono::Utc::now(),
+        };
+        assert!(match_filters(&log_entry_inside, &filters));
     }
 }
