@@ -3,15 +3,17 @@ use clap::Parser;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+mod aggregator;
 mod consumer;
 mod filter;
+mod output;
 mod parser;
-mod aggregator;
 
+use aggregator::CountAggregator;
 use consumer::{Consumer, JsonConsumer, TextConsumer};
 use filter::{Filters, match_filters};
+use output::OutputWriter;
 use parser::parse_log_line;
-use aggregator::CountAggregator;
 
 /// Log analyzer tool
 #[derive(Parser, Debug, Default)]
@@ -49,29 +51,28 @@ struct Args {
     count: bool,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let file = File::open(&args.file).expect("Unable to open log file");
     let reader = BufReader::new(file);
+    let mut output_writer = OutputWriter::new(std::io::stdout());
 
     let mut consumers: Vec<Box<dyn Consumer>> = Vec::new();
-    let stdout = Box::new(std::io::stdout());
-    let stderr = Box::new(std::io::stderr());
     if args.json {
-        consumers.push(Box::new(JsonConsumer::new(stdout).expect("Can not create json consumer")));
+        consumers.push(Box::new(JsonConsumer::new()));
     } else {
-        consumers.push(Box::new(TextConsumer::new(stdout)));
+        consumers.push(Box::new(TextConsumer {}));
     }
     if args.count {
-        consumers.push(Box::new(CountAggregator::new(stderr)));
+        consumers.push(Box::new(CountAggregator::new()));
     }
 
     let filters = match Filters::try_from(args) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("Error in configuration: {e}");
-            return;
+            return Err(Box::new(e));
         }
     };
 
@@ -97,21 +98,17 @@ fn main() {
         }
 
         for consumer in &mut consumers {
-            match consumer.consume(&log_entry) {
-                Ok(()) => {}
-                Err(e) => {
-                    eprintln!("Error consuming log entry: {e:?}");
-                }
+            for out in consumer.consume(&log_entry)? {
+                output_writer.write(&out)?;
             }
         }
     }
 
     for consumer in &mut consumers {
-        match consumer.finalize() {
-            Ok(()) => {}
-            Err(e) => {
-                eprintln!("Error finalizing consumer: {e:?}");
-            }
+        for out in consumer.finalize()? {
+            output_writer.write(&out)?;
         }
     }
+
+    Ok(())
 }

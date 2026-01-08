@@ -1,5 +1,5 @@
-use crate::parser::{LogEntry, LogLevel};
 use crate::Args;
+use crate::parser::{LogEntry, LogLevel};
 use chrono::DateTime;
 use std::fmt;
 
@@ -15,6 +15,8 @@ impl fmt::Display for FilterError {
         }
     }
 }
+
+impl std::error::Error for FilterError {}
 
 #[derive(Debug, PartialEq, Default)]
 pub struct Filters {
@@ -48,29 +50,38 @@ impl TryFrom<Args> for Filters {
 }
 
 pub fn match_filters(log_entry: &LogEntry, filters: &Filters) -> bool {
-    if let Some(level) = &filters.level && level != &log_entry.level {
+    if let Some(level) = &filters.level
+        && level != &log_entry.level
+    {
         return false;
     }
 
-    if let Some(service) = &filters.service && service != &log_entry.service {
+    if let Some(service) = &filters.service
+        && service != &log_entry.service
+    {
         return false;
     }
 
-    if let Some(contains) = &filters.contains && !log_entry.message.contains(contains) {
+    if let Some(contains) = &filters.contains
+        && !log_entry.message.contains(contains)
+    {
         return false;
     }
 
-    if let Some(from) = filters.from && log_entry.timestamp < from {
+    if let Some(from) = filters.from
+        && log_entry.timestamp < from
+    {
         return false;
     }
 
-    if let Some(to) = filters.to && log_entry.timestamp > to {
-         return false;
+    if let Some(to) = filters.to
+        && log_entry.timestamp > to
+    {
+        return false;
     }
-    
+
     true
 }
-
 
 #[cfg(test)]
 mod tests {

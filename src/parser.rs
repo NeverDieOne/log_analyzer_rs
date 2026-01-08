@@ -71,7 +71,6 @@ pub fn parse_log_line(line: &str) -> Result<LogEntry, ParseError> {
     })
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

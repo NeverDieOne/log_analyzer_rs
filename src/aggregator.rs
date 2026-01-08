@@ -1,26 +1,28 @@
 use crate::consumer::{Consumer, ConsumerError};
+use crate::output::Output;
 use crate::parser::LogEntry;
-use std::io::Write;
-
+use std::vec;
 
 pub struct CountAggregator {
-    writer: Box<dyn Write>,
     count: u64,
 }
 
 impl CountAggregator {
-    pub fn new(writer: Box<dyn Write>) -> Self {
-        CountAggregator { writer, count: 0 }
+    pub fn new() -> Self {
+        CountAggregator { count: 0 }
     }
 }
 
 impl Consumer for CountAggregator {
-    fn consume(&mut self, _entry: &LogEntry) -> Result<(), ConsumerError> {
+    fn consume(&mut self, _entry: &LogEntry) -> Result<Vec<Output>, ConsumerError> {
         self.count += 1;
-        Ok(())
+        Ok(vec![])
     }
 
-    fn finalize(&mut self) -> Result<(), ConsumerError> {
-        self.writer.write_fmt(format_args!("Total log entries processed: {}\n", self.count)).map_err(|_| ConsumerError)
+    fn finalize(&mut self) -> Result<Vec<Output>, ConsumerError> {
+        Ok(vec![Output::Line(format!(
+            "Total log entries processed: {}",
+            self.count
+        ))])
     }
 }
