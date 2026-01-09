@@ -1,59 +1,17 @@
-use chrono::DateTime;
 use clap::Parser;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-mod aggregator;
-mod consumer;
-mod filter;
-mod output;
-mod parser;
+mod cli;
+mod consumers;
+mod core;
 
-use aggregator::{CountAggregator, LevelAggregator};
-use consumer::{Consumer, JsonConsumer, TextConsumer};
-use filter::{Filters, match_filters};
-use output::OutputWriter;
-use parser::parse_log_line;
-
-/// Log analyzer tool
-#[derive(Parser, Debug, Default)]
-struct Args {
-    /// Path to the log file
-    #[arg(short, long, default_value = "./app.log")]
-    file: String,
-
-    /// Minimum log level to display (info, warning, error)
-    #[arg(short, long)]
-    level: Option<String>,
-
-    /// Filter by service type (e.g., auth, payment)
-    #[arg(short, long)]
-    service: Option<String>,
-
-    /// Filter by message content
-    #[arg(short, long)]
-    contains: Option<String>,
-
-    /// Filter from timestamp (inclusive)
-    #[arg(long)]
-    from: Option<DateTime<chrono::Utc>>,
-
-    /// Filter to timestamp (inclusive)
-    #[arg(long)]
-    to: Option<DateTime<chrono::Utc>>,
-
-    /// Json output format
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    json: bool,
-
-    /// Aggregate log entries by count
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    count: bool,
-
-    /// Aggregate log entries by level
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    level_aggregate: bool,
-}
+use cli::Args;
+use consumers::{CountAggregator, JsonConsumer, LevelAggregator, TextConsumer};
+use core::consumer::Consumer;
+use core::filter::{Filters, match_filters};
+use core::output::OutputWriter;
+use core::parser::parse_log_line;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();

@@ -1,5 +1,5 @@
-use crate::Args;
-use crate::parser::{LogEntry, LogLevel};
+use crate::cli::Args;
+use crate::core::parser::{LogEntry, LogLevel};
 use chrono::DateTime;
 use std::fmt;
 

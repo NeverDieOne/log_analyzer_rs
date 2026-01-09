@@ -17,9 +17,7 @@ impl<W: Write> OutputWriter<W> {
 
     pub fn write(&mut self, output: &Output) -> std::io::Result<()> {
         match output {
-            Output::Line(line) => {
-                self.writer.write_all(line.as_bytes())
-            }
+            Output::Line(line) => self.writer.write_all(line.as_bytes()),
             Output::Begin => self.writer.write_all(b"[\n"),
             Output::End => self.writer.write_all(b"\n]\n"),
         }
