@@ -1,4 +1,4 @@
-use crate::core::consumer::{Consumer, ConsumerError};
+use crate::core::consumer::Consumer;
 use crate::core::output::Output;
 use crate::core::parser::LogEntry;
 
@@ -13,15 +13,15 @@ impl CountAggregator {
 }
 
 impl Consumer for CountAggregator {
-    fn consume(&mut self, _entry: &LogEntry) -> Result<Vec<Output>, ConsumerError> {
+    fn consume(&mut self, _entry: &LogEntry) -> Vec<Output> {
         self.count += 1;
-        Ok(vec![])
+        vec![]
     }
 
-    fn finalize(&mut self) -> Result<Vec<Output>, ConsumerError> {
-        Ok(vec![Output::Line(format!(
+    fn finalize(&mut self) -> Vec<Output> {
+        vec![Output::Line(format!(
             "---\nTotal log entries processed: {}\n",
             self.count
-        ))])
+        ))]
     }
 }

@@ -1,4 +1,4 @@
-use crate::core::consumer::{Consumer, ConsumerError};
+use crate::core::consumer::Consumer;
 use crate::core::output::Output;
 use crate::core::parser::LogEntry;
 
@@ -13,7 +13,7 @@ impl JsonConsumer {
 }
 
 impl Consumer for JsonConsumer {
-    fn consume(&mut self, entry: &LogEntry) -> Result<Vec<Output>, ConsumerError> {
+    fn consume(&mut self, entry: &LogEntry) -> Vec<Output> {
         let mut out = vec![];
 
         if self.first {
@@ -33,14 +33,14 @@ impl Consumer for JsonConsumer {
             )
         ));
 
-        Ok(out)
+        out
     }
 
-    fn finalize(&mut self) -> Result<Vec<Output>, ConsumerError> {
+    fn finalize(&mut self) -> Vec<Output> {
         if self.first {
-            Ok(vec![])
+            vec![]
         } else {
-            Ok(vec![Output::End])
+            vec![Output::End]
         }
     }
 }

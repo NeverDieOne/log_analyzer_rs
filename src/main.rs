@@ -63,14 +63,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         for consumer in &mut consumers {
-            for out in consumer.consume(&log_entry)? {
+            for out in consumer.consume(&log_entry) {
                 output_writer.write(&out)?;
             }
         }
     }
 
     for consumer in &mut consumers {
-        for out in consumer.finalize()? {
+        for out in consumer.finalize() {
             output_writer.write(&out)?;
         }
     }

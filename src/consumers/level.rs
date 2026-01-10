@@ -1,4 +1,4 @@
-use crate::core::consumer::{Consumer, ConsumerError};
+use crate::core::consumer::Consumer;
 use crate::core::output::Output;
 use crate::core::parser::LogEntry;
 
@@ -15,20 +15,20 @@ impl LevelAggregator {
 }
 
 impl Consumer for LevelAggregator {
-    fn consume(&mut self, entry: &LogEntry) -> Result<Vec<Output>, ConsumerError> {
+    fn consume(&mut self, entry: &LogEntry) -> Vec<Output> {
         let counter = self
             .level_counts
             .entry(entry.level.as_str().to_string())
             .or_insert(0);
         *counter += 1;
-        Ok(vec![])
+        vec![]
     }
 
-    fn finalize(&mut self) -> Result<Vec<Output>, ConsumerError> {
+    fn finalize(&mut self) -> Vec<Output> {
         let mut outputs = vec![Output::Line("---\nLog Level Counts:\n".to_string())];
         for (level, count) in &self.level_counts {
             outputs.push(Output::Line(format!("{level}: {count}\n")));
         }
-        Ok(outputs)
+        outputs
     }
 }
